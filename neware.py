@@ -2,7 +2,7 @@
 import pandas as pd
 from . import new_nda, old_nda
 
-def read_nda(inpath):
+def read_nda(inpath, testcols=False, split=False):
 #def process_nda(inpath, outpath=':auto:'):
 #    if outpath == ':auto:':
 #        outpath = inpath + '.csv'
@@ -11,10 +11,10 @@ def read_nda(inpath):
         data = f.read()
 
     if data[112:115] == b'BTS':
-        outdata = old_nda.old_nda(inpath)
+        outdata = old_nda.old_nda(inpath, testcols=testcols, split=split)
 #        old_nda.old_nda(inpath, outpath=':auto:')
     else:
-        outdata = new_nda.new_nda(inpath)
+        outdata = new_nda.new_nda(inpath, testcols=testcols, split=split)
 #        new_nda.new_nda(inpath, outpath=':auto:')
     return outdata
 
@@ -27,11 +27,11 @@ def read_nda(inpath):
 # If you just want to read the file without doing this extra stuff just use
 # read_csv() from pandas and apply it to the csv file outputted by process_nda()
 
-def nda_to_csv(inpath, outpath=':auto:'):
+def nda_to_csv(inpath, outpath=':auto:', testcols=False, split=False):
 #    process_nda(inpath)
 
     if outpath == ':auto:':
         outpath = inpath + '.csv'
 
-    df = read_nda(inpath)
+    df = read_nda(inpath, testcols=testcols, split=split)
     df.to_csv(outpath)

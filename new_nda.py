@@ -182,6 +182,10 @@ def new_nda(inpath, testcols=False, split=False):
 
     byte_line = []
     csv_line_order = []
+    all_cols = ['column_1', 'record_ID', 'step_ID', 'column_2',
+                          'step_jump', 'step_name', 'step_jump_two', 'time_in_step', 'voltage_V', 'current_mA',
+                          'chg_capacity_mAh', 'dchg_capacity_mAh', 'chg_energy_mWh', 'dchg_energy_mWh',
+                          'column_3', 'column_4', 'timestamp', 'column_5']
     list_data = []
     line_size = 86
 
@@ -189,7 +193,7 @@ def new_nda(inpath, testcols=False, split=False):
     main_data = False
 
     if testcols == False and split==False:
-        csv_line_order = ['record_ID', 'step_ID', 'step_jump', 'step_name', 'step_jump_two', 'time_in_step', 'voltage_V', 'current_mA',
+        csv_line_order = ['record_ID', 'step_ID', 'step_name', 'time_in_step', 'voltage_V', 'current_mA',
                           'capacity_mAh', 'energy_mWh', 'timestamp']
 
     elif testcols == False and split==True:
@@ -197,8 +201,7 @@ def new_nda(inpath, testcols=False, split=False):
                           'chg_capacity_mAh', 'dchg_capacity_mAh', 'chg_energy_mWh', 'dchg_energy_mWh', 'timestamp']
 
     elif testcols == True and split==False:
-        csv_line_order = ['column_1', 'record_ID', 'step_ID', 'column_2',
-                          'step_jump', 'step_name', 'step_jump_two', 'time_in_step', 'voltage_V', 'current_mA',
+        csv_line_order = ['column_1', 'record_ID', 'step_ID', 'column_2', 'step_name', 'time_in_step', 'voltage_V', 'current_mA',
                           'capacity_mAh', 'energy_mWh', 'column_3', 'column_4', 'timestamp', 'column_5']
 
     elif testcols == True and split == True:
@@ -265,7 +268,7 @@ def new_nda(inpath, testcols=False, split=False):
 
 #    return outpath, header_data, csv_line
     # print(subheader)
-    outdata = pd.DataFrame(list_data, columns=csv_line_order)
+    outdata = pd.DataFrame(list_data, columns=all_cols)
     outdata = outdata.sort_values(by=['record_ID'])
     outdata = outdata.drop_duplicates(subset=['record_ID'], keep='first')
 
@@ -299,7 +302,7 @@ def new_nda(inpath, testcols=False, split=False):
         corr.append(a)
 
     outdata['step_ID'] = corr
-
+    outdata = outdata[csv_line_order]
     return outdata
 
 if __name__ == "__main__":

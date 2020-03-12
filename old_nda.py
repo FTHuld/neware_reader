@@ -187,29 +187,31 @@ def old_nda(inpath, testcols=False, split=False):
 
     byte_line = []
     csv_line_order = []
+    all_cols= ['record_ID', 'step_ID', 'step_jump', 'step_name',
+                          'step_jump_two', 'time_in_step', 'voltage_V', 'current_mA',
+                          'blank',
+                          'capacity_mAh', 'energy_mWh', 'timestamp']
     line_size = 59
     list_data = []
     line_number = 0
     main_data = False
 
-    if testcols == False and split == False:
+    if testcols==False and split==False:
+        csv_line_order = ['record_ID', 'step_ID', 'step_name', 'time_in_step', 'voltage_V', 'current_mA',
+                          'capacity_mAh', 'energy_mWh', 'timestamp']
+
+
+    elif testcols==True and split==False:
+        csv_line_order = ['record_ID', 'step_ID', 'step_name', 'time_in_step', 'voltage_V', 'current_mA', 'blank',
+                          'capacity_mAh', 'energy_mWh', 'timestamp']
+
+    elif testcols==False and split==True:
         csv_line_order = ['record_ID', 'step_ID', 'step_jump', 'step_name',
                           'step_jump_two', 'time_in_step', 'voltage_V', 'current_mA',
                           'capacity_mAh', 'energy_mWh', 'timestamp']
-
-    elif testcols == True and split == False:
+    elif testcols==True and split==True:
         csv_line_order = ['record_ID', 'step_ID', 'step_jump', 'step_name',
                           'step_jump_two', 'time_in_step', 'voltage_V', 'current_mA', 'blank',
-                          'capacity_mAh', 'energy_mWh', 'timestamp']
-
-    elif testcols==False and split == True:
-        csv_line_order = ['record_ID', 'step_ID', 'step_jump', 'step_name',
-                          'step_jump_two', 'time_in_step', 'voltage_V', 'current_mA',
-                          'capacity_mAh', 'energy_mWh', 'timestamp']
-    elif testcols==True and split == True:
-        csv_line_order = ['record_ID', 'step_ID', 'step_jump', 'step_name',
-                          'step_jump_two', 'time_in_step', 'voltage_V', 'current_mA',
-                          'blank',
                           'capacity_mAh', 'energy_mWh', 'timestamp']
 
     outdata = pd.DataFrame(columns=csv_line_order)
@@ -263,7 +265,7 @@ def old_nda(inpath, testcols=False, split=False):
 #        return outdata
 #        return outfile, header_data, csv_line
 #    outdata = pd.DataFrame(list_data)
-    outdata = pd.DataFrame(list_data, columns=csv_line_order)
+    outdata = pd.DataFrame(list_data, columns=all_cols)
     outdata = outdata.sort_values(by=['record_ID'])
 #    outdata = outdata.drop_duplicates(subset=['timestamp'], keep='first')
 
@@ -286,6 +288,7 @@ def old_nda(inpath, testcols=False, split=False):
     #    print(outdata[:10])
 #    print(len(outdata))
 #    print(type(outdata))
+    outdata = outdata[csv_line_order]
     return outdata[1:]
 #    return outpath, header_data, csv_line
 
