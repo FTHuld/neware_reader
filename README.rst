@@ -8,7 +8,7 @@ Documentation: https://neware-reader.readthedocs.io/
 
 Features
 
-read_nda()
+read_nda(),
 csv_to_nda()
 
 Credits
