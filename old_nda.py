@@ -1,12 +1,13 @@
 #!/bin/python3.4
+
 import sys, getopt
 import binascii
 import time
 import math
 import datetime
-import csv
 import numpy as np
 import pandas as pd
+
 
 def get_step_name(s):
     if s == 1:
@@ -29,11 +30,8 @@ def get_step_name(s):
 
 
 # Return a dict containing the relevant data.  all nice and pretty like.
-def old_byte_stream(byte_stream):
+def old_byte_stream(byte_stream, small=False):
     curr_dict = {}
-
-    # Make empty column for calculating the subsettable step ID
-#    curr_dict['step_ID'] = 0
 
     # Line ID
     line_idb = int.from_bytes(byte_stream[0:4], byteorder='little')
@@ -55,8 +53,10 @@ def old_byte_stream(byte_stream):
     # identifier for charge, rest, discharge, etc.
     # 4=REST. 1=CC_Chg. 7=CCCV_Chg. 2=CC_DChg.
     sjob = int.from_bytes(byte_stream[9:10], byteorder='little')
-    sjob_name = get_step_name(sjob)
-    curr_dict['step_name'] = sjob_name
+    if small==False:
+        curr_dict['step_name'] = get_step_name(sjob)
+    else:
+        curr_dict['step_name'] = sjob
     # End step name
 
     # Time in step
@@ -182,53 +182,112 @@ def dict_to_csv_line(indict, lorder):
     return csv_line
 
 
-def old_nda(inpath, testcols=False, split=False):
+def old_nda(inpath, testcols=False, split=False, csv_line_order=None, small=False, list_data=None):
     header_size = 2304
 
-    byte_line = []
-    csv_line_order = []
-    all_cols= ['record_ID', 'step_ID', 'step_jump', 'step_name',
-                          'step_jump_two', 'time_in_step', 'voltage_V', 'current_mA',
-                          'blank',
-                          'capacity_mAh', 'energy_mWh', 'timestamp']
+    if csv_line_order is None:
+        csv_line_order = []
+    if list_data is None:
+        list_data = []
+
     line_size = 59
-    list_data = []
-    line_number = 0
     main_data = False
+    if small==False:
+        all_cols= ['record_ID',
+                   'step_ID',
+                   'step_jump',
+                   'step_name',
+                   'step_jump_two',
+                   'time_in_step',
+                   'voltage_V',
+                   'current_mA',
+                   'blank',
+                   'capacity_mAh',
+                   'energy_mWh',
+                   'timestamp']
 
-    if testcols==False and split==False:
-        csv_line_order = ['record_ID', 'step_ID', 'step_name', 'time_in_step', 'voltage_V', 'current_mA',
-                          'capacity_mAh', 'energy_mWh', 'timestamp']
+        if testcols==False and split==False:
+            csv_line_order = ['record_ID',
+                              'step_ID',
+                              'step_name',
+                              'time_in_step',
+                              'voltage_V',
+                              'current_mA',
+                              'capacity_mAh',
+                              'energy_mWh',
+                              'timestamp']
+        elif testcols==True and split==False:
+            csv_line_order = ['record_ID',
+                              'step_ID',
+                              'step_name',
+                              'time_in_step',
+                              'voltage_V',
+                              'current_mA',
+                              'blank',
+                              'capacity_mAh',
+                              'energy_mWh',
+                              'timestamp']
+        elif testcols==False and split==True:
+            csv_line_order = ['record_ID',
+                              'step_ID',
+                              'step_jump',
+                              'step_name',
+                              'step_jump_two',
+                              'time_in_step',
+                              'voltage_V',
+                              'current_mA',
+                              'capacity_mAh',
+                              'energy_mWh',
+                              'timestamp']
+        elif testcols==True and split==True:
+            csv_line_order = all_cols
 
+    else:
+        all_cols= ['record_ID',
+                   'step_ID',
+                   'step_jump',
+                   'step_name',
+                   'step_jump_two',
+                   'time_in_step',
+                   'voltage_V',
+                   'current_mA',
+                   'blank',
+                   'capacity_mAh',
+                   'energy_mWh',]
 
-    elif testcols==True and split==False:
-        csv_line_order = ['record_ID', 'step_ID', 'step_name', 'time_in_step', 'voltage_V', 'current_mA', 'blank',
-                          'capacity_mAh', 'energy_mWh', 'timestamp']
+        if testcols==False and split==False:
+            csv_line_order = ['record_ID',
+                              'step_ID',
+                              'step_name',
+                              'time_in_step',
+                              'voltage_V',
+                              'current_mA',
+                              'capacity_mAh',
+                              'energy_mWh',]
+        elif testcols==True and split==False:
+            csv_line_order = ['record_ID',
+                              'step_ID',
+                              'step_name',
+                              'time_in_step',
+                              'voltage_V',
+                              'current_mA',
+                              'blank',
+                              'capacity_mAh',
+                              'energy_mWh',]
+        elif testcols==False and split==True:
+            csv_line_order = ['record_ID',
+                              'step_ID',
+                              'step_jump',
+                              'step_name',
+                              'step_jump_two',
+                              'time_in_step',
+                              'voltage_V',
+                              'current_mA',
+                              'capacity_mAh',
+                              'energy_mWh']
+        elif testcols==True and split==True:
+            csv_line_order = all_cols
 
-    elif testcols==False and split==True:
-        csv_line_order = ['record_ID', 'step_ID', 'step_jump', 'step_name',
-                          'step_jump_two', 'time_in_step', 'voltage_V', 'current_mA',
-                          'capacity_mAh', 'energy_mWh', 'timestamp']
-    elif testcols==True and split==True:
-        csv_line_order = ['record_ID', 'step_ID', 'step_jump', 'step_name',
-                          'step_jump_two', 'time_in_step', 'voltage_V', 'current_mA', 'blank',
-                          'capacity_mAh', 'energy_mWh', 'timestamp']
-
-    outdata = pd.DataFrame(columns=csv_line_order)
-
-#    if outpath == ':auto:':
-#        outpath = inpath + '.csv'
-
-#    if outpath != ':mem:':
-#        outfile = open(outpath, 'w')
-
-#    else:
-#        import io
-#        outfile = io.StringIO()
-#    csv_out = csv.writer(outfile, delimiter=',', quotechar="\"")
-#    csv_out.writerow(csv_line_order)
-
-    header_data = {}
     with open(inpath, "rb") as f:
         header_bytes = f.read(header_size)
         # TODO: header decoding, including finding a mass
@@ -253,19 +312,15 @@ def old_nda(inpath, testcols=False, split=False):
             if line == b'':
                 break
 
-            dict_line = old_byte_stream(line)
-#            csv_line = dict_to_csv_line(dict_line, csv_line_order)
-            # print(csv_line)
+            dict_line = old_byte_stream(line, small=small)
+
             if bool(dict_line)==True:
                 list_data.append(dict_line)
-#                outdata.extend(csv_line)
-#                csv_out.writerow(csv_line)
-#        print(len(list_data))
-#    if outpath == ':mem:':
-#        return outdata
-#        return outfile, header_data, csv_line
-#    outdata = pd.DataFrame(list_data)
-    outdata = pd.DataFrame(list_data, columns=all_cols)
+
+    if small==False:
+        outdata = pd.DataFrame(list_data, columns=all_cols)
+    else:
+        outdata = pd.DataFrame(list_data, columns=all_cols, dtype='float32')
     outdata = outdata.sort_values(by=['record_ID'])
 #    outdata = outdata.drop_duplicates(subset=['timestamp'], keep='first')
 
@@ -285,12 +340,9 @@ def old_nda(inpath, testcols=False, split=False):
         corr.append(a)
 
     outdata['step_ID'] = corr
-    #    print(outdata[:10])
-#    print(len(outdata))
-#    print(type(outdata))
     outdata = outdata[csv_line_order]
+    # The first row is weird. Ignore it.
     return outdata[1:]
-#    return outpath, header_data, csv_line
 
 
 
