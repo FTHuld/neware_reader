@@ -3,9 +3,9 @@ import pathlib
 
 import pytest
 
-import new_nda
-import old_nda
-import neware
+from . import new_nda
+from . import old_nda
+from . import neware
 
 
 old_nda_file = pathlib.Path("testdata") / "test.nda"
