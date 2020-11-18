@@ -21,11 +21,11 @@ def read_nda(inpath, testcols=False, split=False, small=False):
 
     return outdata
 
-def nda_to_csv(inpath, outpath=':auto:', testcols=False, split=False):
+def nda_to_csv(inpath, outpath=':auto:', testcols=False, split=False, small=False):
 #    process_nda(inpath)
 
     if outpath == ':auto:':
         outpath = inpath + '.csv'
 
-    df = read_nda(inpath, testcols=testcols, split=split)
+    df = read_nda(inpath, testcols=testcols, split=split, small=small)
     df.to_csv(outpath)

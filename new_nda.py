@@ -82,17 +82,17 @@ def new_byte_stream(byte_stream, small=False):
     dchg_cap = int.from_bytes(byte_stream[45:53], byteorder='little', signed=True)  # ?
     curr_dict['dchg_capacity_mAh'] = dchg_cap / 36000000
 
-    curr_dict['capacity_mAh'] = (chg_cap + dchg_cap) / 360000000
+    curr_dict['capacity_mAh'] = (chg_cap + dchg_cap) / 36000000
 
     # Energy Charge mWh
     chg_eng = int.from_bytes(byte_stream[53:59], byteorder='little', signed=True)  # ?
-    curr_dict['chg_energy_mWh'] = chg_eng / 360000000
+    curr_dict['chg_energy_mWh'] = chg_eng / 36000000
 
     # Energy Discharge mWh
     dchg_eng = int.from_bytes(byte_stream[61:67], byteorder='little', signed=True)  # ?
-    curr_dict['dchg_energy_mWh'] = dchg_eng / 360000000
+    curr_dict['dchg_energy_mWh'] = dchg_eng / 36000000
 
-    curr_dict['energy_mWh'] = (chg_eng + dchg_eng) / 360000000
+    curr_dict['energy_mWh'] = (chg_eng + dchg_eng) / 36000000
 
     # 29-45 and 65-69 Other stuff? eg capacity and energy of CCCV and CV curves
     # Print it anyway
@@ -345,13 +345,13 @@ def new_nda(inpath, testcols=False, split=False, csv_line_order=None, small=Fals
             if bool(dict_line)==True:
                 list_data.append(dict_line)
 
-    print(sys.getsizeof(list_data))
+    #print(sys.getsizeof(list_data))
     # This if statement keeps the file small during construction (if small=True).
     if small==True:
         outdata = pd.DataFrame(list_data, columns=all_cols, dtype='float32')
     else:
         outdata = pd.DataFrame(list_data, columns=all_cols)
-    print(sys.getsizeof(outdata))
+    #print(sys.getsizeof(outdata))
 
     outdata = outdata.sort_values(by=['record_ID'])
     outdata = outdata.drop_duplicates(subset=['record_ID'], keep='first')
