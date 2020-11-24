@@ -402,8 +402,8 @@ def new_nda(inpath, testcols=False, split=False, csv_line_order=None, small=Fals
     if small==True:
         outdata = outdata.astype('float32')
     outdata = outdata[csv_line_order]
-    pd.DataFrame.to_csv(outdata, outpath) #Did not get any output file if this line were not present
-    #return outdata
+    #pd.DataFrame.to_csv(outdata, outpath) #Did not get any output file if this line were not present
+    return outdata
 
 if __name__ == "__main__":
     print(process_nda(sys.argv[1], sys.argv[2]))
