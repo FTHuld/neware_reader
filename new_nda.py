@@ -24,9 +24,23 @@ def get_step_name(s):
 
     elif s == 7:
         return "CCCV_Chg"
+
+    elif s == 8:
+        return "CP_Dchg"
+
+    elif s == 9:
+        return "CP_Chg"
+
+    elif s == 10:
+        return "CR_Dchg"
     # TODO: The rest
+
+    elif s == 20:
+        return "CCCV_Dchg"
     else:
         return str(s)
+
+
 
 
 # Return a dict containing the relevant data.  all nice and pretty like.
@@ -126,6 +140,7 @@ def new_byte_stream(byte_stream, small=False):
 
 
 def process_header(header_bytes):
+    print("process_header")
     magic_number = header_bytes[0:6].decode('utf-8')
     if magic_number != 'NEWARE':
         raise RuntimeError("Magic number wrong. Not valid .nda file")
@@ -134,14 +149,18 @@ def process_header(header_bytes):
     month = header_bytes[10:12].decode('utf-8')
     day = header_bytes[12:14].decode('utf-8')
 
-    hour = header_bytes[2137:2139].decode('utf-8')
+    hour = header_bytes[2138:2139].decode('utf-8')
     minute = header_bytes[2140:2142].decode('utf-8')
     second = header_bytes[2143:2145].decode('utf-8')
 
     version = header_bytes[112:142].decode('utf-16').strip()
     name = header_bytes[2166:2178].decode('utf-8').strip('\00')
-    # Comments is odd. Creation date?
-    comments = header_bytes[2181:2300].decode('utf-8').strip('\00')
+    #PN 
+    PN = header_bytes[2227:2271].decode('utf-8').strip('\00')
+     # Comments is odd. Creation date?
+    comments = header_bytes[2316:2436].decode('utf-8').strip('\00')
+    #step file name
+    step_file_name = header_bytes[2533:2575].decode('utf-8').strip('\00') #Could not strip \00
 
     # Not sure if this is really channel stuff...
     machine = int.from_bytes(header_bytes[2091:2092], byteorder='little')
@@ -152,10 +171,12 @@ def process_header(header_bytes):
         'year': year, 'month': month, 'day': day, 'hour': hour,
         'minute': minute, 'second': second, 'version': version,
         'comments': comments, 'machine': machine, 'channel': channel,
-        'name': name
+        'name': name, 'PN': PN, 'step_file_name': step_file_name
     }
     # TODO: find mass or something
+   
     return ret
+
 
 
 def process_subheader(subheader_bytes):
@@ -324,6 +345,13 @@ def new_nda(inpath, testcols=False, split=False, csv_line_order=None, small=Fals
 
     with open(inpath, "rb") as f:
         header_bytes = f.read(header_size)
+    #added these 4 lines to add PN as filename if COR is part of PN        
+        header = process_header(header_bytes)
+        PN_name = header['PN']
+        if PN_name.__contains__("COR") == True:
+            outpath = PN_name + ".csv"
+
+        
         byte = f.read(1)
         pos = 0
         subheader = b''
@@ -374,6 +402,7 @@ def new_nda(inpath, testcols=False, split=False, csv_line_order=None, small=Fals
     if small==True:
         outdata = outdata.astype('float32')
     outdata = outdata[csv_line_order]
+    #pd.DataFrame.to_csv(outdata, outpath) #Did not get any output file if this line were not present
     return outdata
 
 if __name__ == "__main__":
