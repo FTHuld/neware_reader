@@ -20,11 +20,26 @@ def get_step_name(s):
 
     elif s == 4:
         return "Rest"
-    # TODO: 5, 6
+    # TODO: 5
+
+    elif s == 6:
+        return "End"
 
     elif s == 7:
         return "CCCV_Chg"
+
+    elif s == 8:
+        return "CP_Dchg"
+
+    elif s == 9:
+        return "CP_Chg"
+
+    elif s == 10:
+        return "CR_Dchg"
     # TODO: The rest
+
+    elif s == 20:
+        return "CCCV_Dchg"
     else:
         return str(s)
 
@@ -34,8 +49,8 @@ def new_byte_stream(byte_stream, small=False):
     curr_dict = {}
 
     # Seems to be record ID * 256
-    column_1 = int.from_bytes(byte_stream[0:1], byteorder='little', signed=True)  # ?? indicator of subheader?
-    curr_dict['column_1'] = column_1
+    aux_ch = int.from_bytes(byte_stream[0:1], byteorder='little', signed=True)  # Notifies AUX channel data maybe boolean not int?
+    curr_dict['AUX_channel'] = aux_ch
 
     # Record ID
     record_ID = int.from_bytes(byte_stream[1:5], byteorder='little', signed=True)  # 1 record id
@@ -70,9 +85,20 @@ def new_byte_stream(byte_stream, small=False):
     vol = int.from_bytes(byte_stream[21:25], byteorder='little', signed=True)  # 22126   voltage
     curr_dict['voltage_V'] = vol / 10000
 
+    ########
+    #
+    # Noticed that on AUX channel connected the voltage from AUX is placed in voltage if AUC_channel is true (or 1)
+    # If the AUX_voltage is not connected the voltage will be ~0
+    #
+    ########
+
     # Current mA
     cur = int.from_bytes(byte_stream[25:29], byteorder='little', signed=True)  # 7  current
     curr_dict['current_mA'] = cur / 10000
+
+    #aux channel temp if connected
+    aux_temp = int.from_bytes(byte_stream[33:35], byteorder='little', signed=True) # Aux temperature
+    curr_dict['aux_temp'] = aux_temp /10
 
     # Capacity Charge mAh
     chg_cap = int.from_bytes(byte_stream[37:45], byteorder='little', signed=True)  # ?
@@ -94,14 +120,6 @@ def new_byte_stream(byte_stream, small=False):
 
     curr_dict['energy_mWh'] = (chg_eng + dchg_eng) / 36000000
 
-    # 29-45 and 65-69 Other stuff? eg capacity and energy of CCCV and CV curves
-    # Print it anyway
-    column_3 = int.from_bytes(byte_stream[41:45], byteorder='little', signed=True)
-    curr_dict['column_3'] = column_3
-
-    column_4 = int.from_bytes(byte_stream[65:69], byteorder='little', signed=True)
-    curr_dict['column_4'] = column_4
-
     # Date and time
     year = int.from_bytes(byte_stream[69:71], byteorder='little', signed=True)  # 8 year
     month = int.from_bytes(byte_stream[71:72], byteorder='little', signed=True)  # 8 month
@@ -112,11 +130,33 @@ def new_byte_stream(byte_stream, small=False):
 
     curr_dict['timestamp'] = f'{year}-{month}-{day} {hour}:{minute}:{second}'
 
-    # 78-86 Not sure. Extra space?
-    column_5 = int.from_bytes(byte_stream[78:84], byteorder='little', signed=True)  # 11
+    # 29-45 and 65-69 Other stuff? eg capacity and energy of CCCV and CV curves
+    # Print it anyway
+    column_3 = int.from_bytes(byte_stream[41:45], byteorder='little', signed=True)
+    curr_dict['column_3'] = column_3
+
+    column_4 = int.from_bytes(byte_stream[65:69], byteorder='little', signed=True)
+    curr_dict['column_4'] = column_4
+
+    # 76-86 Not sure. Extra space?
+    ##
+    ## Column_5 contains data as long as AUX_channel is false.
+    ## Looks to be high number during charge / discharge and low during rest
+    ##
+
+    column_5 = int.from_bytes(byte_stream[77:80], byteorder='little', signed=True)  # 11
     curr_dict['column_5'] = column_5
 
-    # print(curr_dict)
+    column_7 = int.from_bytes(byte_stream[76:77], byteorder='little', signed=True)  # 11 
+    curr_dict['column_7'] = column_7
+
+    column_8 = int.from_bytes(byte_stream[34:36], byteorder='little', signed=True)  # 11
+    curr_dict['column_8'] = column_8
+
+    column_9 = int.from_bytes(byte_stream[80:85], byteorder='little', signed=True)  # 11
+    curr_dict['column_9'] = column_9
+ 
+    #print(curr_dict)
     # Raw binary available for bugfixing purposes only
     raw_bin = str(binascii.hexlify(bytearray(byte_stream)))
     curr_dict['RAW_BIN'] = raw_bin
@@ -126,22 +166,34 @@ def new_byte_stream(byte_stream, small=False):
 
 
 def process_header(header_bytes):
+    # print("process_header") 
     magic_number = header_bytes[0:6].decode('utf-8')
     if magic_number != 'NEWARE':
         raise RuntimeError("Magic number wrong. Not valid .nda file")
         # Possibly ASCI coding but whatever.  This works.
+
     year = header_bytes[6:10].decode('utf-8')
     month = header_bytes[10:12].decode('utf-8')
     day = header_bytes[12:14].decode('utf-8')
 
-    hour = header_bytes[2137:2139].decode('utf-8')
+    hour = header_bytes[2138:2139].decode('utf-8')
     minute = header_bytes[2140:2142].decode('utf-8')
     second = header_bytes[2143:2145].decode('utf-8')
 
-    version = header_bytes[112:142].decode('utf-16').strip()
+    version = header_bytes[112:142].decode('utf-16').strip('\00')
     name = header_bytes[2166:2178].decode('utf-8').strip('\00')
-    # Comments is odd. Creation date?
-    comments = header_bytes[2181:2300].decode('utf-8').strip('\00')
+    #PN added in step file 
+    PN = header_bytes[2227:2271].decode('utf-8').strip('\00')
+     # Comments is odd. 
+    comments = header_bytes[2316:2436].decode('utf-8').strip('\00')
+    #step file name
+    step_file_name = header_bytes[2533:2575].decode('utf-8').strip('\00') #might be to many bits
+    #BTS Server listing 1
+   # bts_server_1 = header_bytes[2593:2628].decode('utf-8').strip('\00')
+    #BTS Server listing 2
+   # bts_server_2 = header_bytes[2643:2678].decode('utf-8').strip('\00')
+    #BTS Server listing 3
+  #  bts_server_3 = header_bytes[2693:2718].decode('utf-8').strip('\00')
 
     # Not sure if this is really channel stuff...
     machine = int.from_bytes(header_bytes[2091:2092], byteorder='little')
@@ -152,7 +204,8 @@ def process_header(header_bytes):
         'year': year, 'month': month, 'day': day, 'hour': hour,
         'minute': minute, 'second': second, 'version': version,
         'comments': comments, 'machine': machine, 'channel': channel,
-        'name': name
+        'name': name, 'PN': PN, 'step_file_name': step_file_name #, 'BTS_server_1': bts_server_1,
+        #'BTS_server_2': bts_server_2, 'BTS_server_3': bts_server_3
     }
     # TODO: find mass or something
     return ret
@@ -184,7 +237,7 @@ def dict_to_csv_line(indict, lorder, csv_line=None):
 
 # Output for newest BTSDA version
 
-def new_nda(inpath, testcols=False, split=False, csv_line_order=None, small=False, list_data=None):
+def new_nda(inpath, testcols=True, split=True, csv_line_order=None, small=False, list_data=None):
 
     if csv_line_order is None:
         csv_line_order = []
@@ -213,7 +266,8 @@ def new_nda(inpath, testcols=False, split=False, csv_line_order=None, small=Fals
                     'energy_mWh',
                     'column_3',
                     'column_4',
-                    'column_5']
+                    'column_5',
+                    'aux_temp']
 
         if testcols == False and split==False:
             csv_line_order = ['record_ID',
@@ -255,7 +309,7 @@ def new_nda(inpath, testcols=False, split=False, csv_line_order=None, small=Fals
             csv_line_order = all_cols
 
     else:
-        all_cols = ['column_1',
+        all_cols = ['AUX_channel',
                     'record_ID',
                     'step_ID',
                     'column_2',
@@ -271,10 +325,14 @@ def new_nda(inpath, testcols=False, split=False, csv_line_order=None, small=Fals
                     'chg_energy_mWh',
                     'dchg_energy_mWh',
                     'energy_mWh',
+                    'timestamp',
+                    'aux_temp',
                     'column_3',
                     'column_4',
-                    'timestamp',
-                    'column_5']
+                    'column_5',
+                    'column_7',
+                    'column_8',
+                    'column_9']
 
         if testcols == False and split == False:
             csv_line_order = ['record_ID',
@@ -324,6 +382,12 @@ def new_nda(inpath, testcols=False, split=False, csv_line_order=None, small=Fals
 
     with open(inpath, "rb") as f:
         header_bytes = f.read(header_size)
+        #added these 4 lines to add PN as filename if COR is part of PN        
+        header = process_header(header_bytes)
+        PN_name = header['PN']
+        if PN_name.__contains__("COR") == True:
+            outpath = PN_name + ".csv"
+
         byte = f.read(1)
         pos = 0
         subheader = b''
@@ -374,10 +438,9 @@ def new_nda(inpath, testcols=False, split=False, csv_line_order=None, small=Fals
     if small==True:
         outdata = outdata.astype('float32')
     outdata = outdata[csv_line_order]
+    #pd.DataFrame.to_csv(outdata, outpath) #Did not get any output file if this line were not present
     return outdata
 
-if __name__ == "__main__":
-    print(process_nda(sys.argv[1], sys.argv[2]))
 
 
 def process_nda(inpath, outpath=':auto:'):
@@ -391,3 +454,7 @@ def process_nda(inpath, outpath=':auto:'):
         old_nda(inpath, outpath=':auto:')
     else:
         new_nda(inpath, outpath=':auto:')
+
+if __name__ == "__main__":
+   print(process_nda(sys.argv[1], sys.argv[2]))
+
