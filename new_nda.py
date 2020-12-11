@@ -56,9 +56,9 @@ def new_byte_stream(byte_stream, small=False):
     record_ID = int.from_bytes(byte_stream[1:5], byteorder='little', signed=True)  # 1 record id
     curr_dict['record_ID'] = record_ID
 
-    # Not sure
-    column_2 = int.from_bytes(byte_stream[5:9], byteorder='little', signed=True)  # 0 ?
-    curr_dict['column_2'] = column_2
+    # Cycle ID
+    cycle_ID = int.from_bytes(byte_stream[5:9], byteorder='little', signed=True)  # cycle ID offset by 4 (?!?) might be missing a bit
+    curr_dict['cycle_ID'] = cycle_ID
 
     # Step number?
     step_jump = int.from_bytes(byte_stream[9:11], byteorder='little', signed=True)  # 1 step number
@@ -85,19 +85,22 @@ def new_byte_stream(byte_stream, small=False):
     vol = int.from_bytes(byte_stream[21:25], byteorder='little', signed=True)  # 22126   voltage
     curr_dict['voltage_V'] = vol / 10000
 
-    ########
+    #######
     #
     # Noticed that on AUX channel connected the voltage from AUX is placed in voltage if AUC_channel is true (or 1)
     # If the AUX_voltage is not connected the voltage will be ~0
-    #
-    ########
+    # One should connect both voltage and temperature from the AUX channel linked to the cycler channel 
+    # END bytes are 55 when cycler data and 65 when aux data
+    # Added loop to exclude data.
+    # 
+    ######
 
     # Current mA
     cur = int.from_bytes(byte_stream[25:29], byteorder='little', signed=True)  # 7  current
     curr_dict['current_mA'] = cur / 10000
 
     #aux channel temp if connected
-    aux_temp = int.from_bytes(byte_stream[33:35], byteorder='little', signed=True) # Aux temperature
+    aux_temp = int.from_bytes(byte_stream[33:35], byteorder='little', signed=True) # 12 #Aux temperature
     curr_dict['aux_temp'] = aux_temp /10
 
     # Capacity Charge mAh
@@ -138,30 +141,34 @@ def new_byte_stream(byte_stream, small=False):
     column_4 = int.from_bytes(byte_stream[65:69], byteorder='little', signed=True)
     curr_dict['column_4'] = column_4
 
+
     # 76-86 Not sure. Extra space?
+
     ##
     ## Column_5 contains data as long as AUX_channel is false.
     ## Looks to be high number during charge / discharge and low during rest
+    ## 
     ##
 
-    column_5 = int.from_bytes(byte_stream[77:80], byteorder='little', signed=True)  # 11
+    column_5 = int.from_bytes(byte_stream[76:78], byteorder='little', signed=True)  # 11  
     curr_dict['column_5'] = column_5
 
-    column_7 = int.from_bytes(byte_stream[76:77], byteorder='little', signed=True)  # 11 
+    column_7 = int.from_bytes(byte_stream[78:80], byteorder='little', signed=True)  # 11 
     curr_dict['column_7'] = column_7
 
-    column_8 = int.from_bytes(byte_stream[34:36], byteorder='little', signed=True)  # 11
+    column_8 = int.from_bytes(byte_stream[79:80], byteorder='little', signed=True)  # 11
     curr_dict['column_8'] = column_8
 
     column_9 = int.from_bytes(byte_stream[80:85], byteorder='little', signed=True)  # 11
     curr_dict['column_9'] = column_9
- 
+
+   
     #print(curr_dict)
     # Raw binary available for bugfixing purposes only
     raw_bin = str(binascii.hexlify(bytearray(byte_stream)))
     curr_dict['RAW_BIN'] = raw_bin
     # time.sleep(.1)
-
+       
     return curr_dict
 
 
@@ -211,6 +218,7 @@ def process_header(header_bytes):
     return ret
 
 
+
 def process_subheader(subheader_bytes):
     pass
 
@@ -237,21 +245,23 @@ def dict_to_csv_line(indict, lorder, csv_line=None):
 
 # Output for newest BTSDA version
 
-def new_nda(inpath, testcols=True, split=True, csv_line_order=None, small=False, list_data=None):
+def new_nda(inpath, testcols=True, split=True, csv_line_order=None, small=False, list_data=None, list_data_aux= None):
 
     if csv_line_order is None:
         csv_line_order = []
     if list_data is None:
         list_data = []
+    if list_data_aux is None:
+        list_data_aux = []
 
     line_size = 86
     main_data = False
 
     if small==True:
-        all_cols = ['column_1',
+        all_cols = ['AUX_channel',
                     'record_ID',
                     'step_ID',
-                    'column_2',
+                    'cycle_ID',
                     'step_jump',
                     'step_name',
                     'step_jump_two',
@@ -277,7 +287,8 @@ def new_nda(inpath, testcols=True, split=True, csv_line_order=None, small=False,
                               'voltage_V',
                               'current_mA',
                               'capacity_mAh',
-                              'energy_mWh']
+                              'energy_mWh',
+                              'aux_temp']
         elif testcols == False and split==True:
             csv_line_order = ['record_ID',
                               'step_ID',
@@ -290,29 +301,28 @@ def new_nda(inpath, testcols=True, split=True, csv_line_order=None, small=False,
                               'chg_capacity_mAh',
                               'dchg_capacity_mAh',
                               'chg_energy_mWh',
-                              'dchg_energy_mWh']
+                              'dchg_energy_mWh',
+                              'aux_temp']
         elif testcols == True and split==False:
-            csv_line_order = ['column_1',
+            csv_line_order = ['AUX_channel',
                               'record_ID',
                               'step_ID',
-                              'column_2',
+                              'cycle_ID',
                               'step_name',
                               'time_in_step',
                               'voltage_V',
                               'current_mA',
                               'capacity_mAh',
                               'energy_mWh',
-                              'column_3',
+                              'aux_temp',
                               'column_4',
                               'column_5']
         elif testcols == True and split == True:
             csv_line_order = all_cols
 
     else:
-        all_cols = ['AUX_channel',
-                    'record_ID',
+        all_cols = ['record_ID',
                     'step_ID',
-                    'column_2',
                     'step_jump',
                     'step_name',
                     'step_jump_two',
@@ -326,7 +336,11 @@ def new_nda(inpath, testcols=True, split=True, csv_line_order=None, small=False,
                     'dchg_energy_mWh',
                     'energy_mWh',
                     'timestamp',
+                    'AUX_channel',
                     'aux_temp',
+                    'AUX_voltage_V',
+                    'AUX_timestamp',
+                    'cycle_ID',
                     'column_3',
                     'column_4',
                     'column_5',
@@ -343,7 +357,8 @@ def new_nda(inpath, testcols=True, split=True, csv_line_order=None, small=False,
                               'current_mA',
                               'capacity_mAh',
                               'energy_mWh',
-                              'timestamp']
+                              'timestamp',
+                                'aux_temp']
         elif testcols == False and split == True:
             csv_line_order = ['record_ID',
                               'step_ID',
@@ -357,12 +372,13 @@ def new_nda(inpath, testcols=True, split=True, csv_line_order=None, small=False,
                               'dchg_capacity_mAh',
                               'chg_energy_mWh',
                               'dchg_energy_mWh',
-                              'timestamp']
+                              'timestamp',
+                              'aux_temp']
         elif testcols == True and split == False:
             csv_line_order = ['column_1',
                               'record_ID',
                               'step_ID',
-                              'column_2',
+                              'cycle_ID',
                               'step_name',
                               'time_in_step',
                               'voltage_V',
@@ -372,7 +388,9 @@ def new_nda(inpath, testcols=True, split=True, csv_line_order=None, small=False,
                               'column_3',
                               'column_4',
                               'timestamp',
-                              'column_5']
+                              'aux_temp',
+                              'column_5',
+                              'AUX_channel']
         elif testcols == True and split == True:
             csv_line_order = all_cols
 
@@ -407,15 +425,35 @@ def new_nda(inpath, testcols=True, split=True, csv_line_order=None, small=False,
 
             dict_line = new_byte_stream(line, small=small)
             if bool(dict_line)==True:
-                list_data.append(dict_line)
+                if dict_line['AUX_channel'] == 1:
+                    list_data_aux.append(dict_line)     #Store Aux data in separate list
+                else:
+                    list_data.append(dict_line)
 
     #print(sys.getsizeof(list_data))
+    #print(list_data_aux)
     # This if statement keeps the file small during construction (if small=True).
     if small==True:
-        outdata = pd.DataFrame(list_data, columns=all_cols, dtype='float32')
+        outdata_cycler = pd.DataFrame(list_data, columns=all_cols, dtype='float32')
+        outdata_aux = pd.DataFrame(list_data_aux, columns=all_cols, dtype='float32') 
     else:
-        outdata = pd.DataFrame(list_data, columns=all_cols)
+        outdata_cycler = pd.DataFrame(list_data, columns=all_cols)
+        outdata_aux = pd.DataFrame(list_data_aux, columns=all_cols)
     #print(sys.getsizeof(outdata))
+    if outdata_aux.empty:
+        #outdata_cycler.drop(['aux_temp','AUX_timestamp', 'AUX_voltage_V' ], axis = 1, inplace = True)
+        
+        outdata = outdata_cycler
+    else:
+        columns = ['voltage_V', 'aux_temp', 'timestamp' ]               # selct columns to copy to outdata DF  , 'record_ID'
+        outdata_aux = outdata_aux.loc[:,outdata_aux.columns.isin(columns)]      # keep only selected coulmns
+        outdata_aux.rename(columns={'voltage_V': 'AUX_voltage_V'}, inplace=True)
+        outdata_aux.rename(columns={'timestamp': 'AUX_timestamp'}, inplace=True)
+        outdata_cycler.drop(['aux_temp','AUX_timestamp', 'AUX_voltage_V' ], axis = 1, inplace = True)
+        outdata = pd.concat([outdata_aux, outdata_cycler], join = 'outer', axis = 1)
+        print(outdata_aux)
+        print(outdata_cycler) 
+        print(outdata)
 
     outdata = outdata.sort_values(by=['record_ID'])
     outdata = outdata.drop_duplicates(subset=['record_ID'], keep='first')
@@ -440,6 +478,7 @@ def new_nda(inpath, testcols=True, split=True, csv_line_order=None, small=False,
     outdata = outdata[csv_line_order]
     #pd.DataFrame.to_csv(outdata, outpath) #Did not get any output file if this line were not present
     return outdata
+
 
 
 
