@@ -44,6 +44,8 @@ def get_step_name(s):
         return str(s)
 
 
+
+
 # Return a dict containing the relevant data.  all nice and pretty like.
 def new_byte_stream(byte_stream, small=False):
     curr_dict = {}
@@ -173,7 +175,9 @@ def new_byte_stream(byte_stream, small=False):
 
 
 def process_header(header_bytes):
+
     # print("process_header") 
+
     magic_number = header_bytes[0:6].decode('utf-8')
     if magic_number != 'NEWARE':
         raise RuntimeError("Magic number wrong. Not valid .nda file")
@@ -189,6 +193,7 @@ def process_header(header_bytes):
 
     version = header_bytes[112:142].decode('utf-16').strip('\00')
     name = header_bytes[2166:2178].decode('utf-8').strip('\00')
+
     #PN added in step file 
     PN = header_bytes[2227:2271].decode('utf-8').strip('\00')
      # Comments is odd. 
@@ -202,6 +207,7 @@ def process_header(header_bytes):
     #BTS Server listing 3
   #  bts_server_3 = header_bytes[2693:2718].decode('utf-8').strip('\00')
 
+
     # Not sure if this is really channel stuff...
     machine = int.from_bytes(header_bytes[2091:2092], byteorder='little')
     channel = int.from_bytes(header_bytes[2092:2093], byteorder='little')
@@ -211,10 +217,13 @@ def process_header(header_bytes):
         'year': year, 'month': month, 'day': day, 'hour': hour,
         'minute': minute, 'second': second, 'version': version,
         'comments': comments, 'machine': machine, 'channel': channel,
+
         'name': name, 'PN': PN, 'step_file_name': step_file_name #, 'BTS_server_1': bts_server_1,
         #'BTS_server_2': bts_server_2, 'BTS_server_3': bts_server_3
+
     }
     # TODO: find mass or something
+   
     return ret
 
 
@@ -400,11 +409,14 @@ def new_nda(inpath, testcols=True, split=True, csv_line_order=None, small=False,
 
     with open(inpath, "rb") as f:
         header_bytes = f.read(header_size)
+
         #added these 4 lines to add PN as filename if COR is part of PN        
+
         header = process_header(header_bytes)
         PN_name = header['PN']
         if PN_name.__contains__("COR") == True:
             outpath = PN_name + ".csv"
+
 
         byte = f.read(1)
         pos = 0
