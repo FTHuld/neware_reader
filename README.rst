@@ -4,8 +4,6 @@ This Python Package was developed to help researchers to extract data from Newar
 
 Free software: BSD-2 license
 
-Documentation: https://neware-reader.readthedocs.io/
-
 Features
 
 read_nda(),
