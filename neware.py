@@ -1,6 +1,6 @@
 #!/bin/python3.4
 import pandas as pd
-from . import new_nda, old_nda
+from . import new_nda, old_nda, nda_version_8_0
 
 def read_nda(inpath, testcols=False, split=False, small=False):
     # inpath: 'yourfile.nda'
@@ -16,6 +16,8 @@ def read_nda(inpath, testcols=False, split=False, small=False):
 
     if data[112:115] == b'BTS':
         outdata = old_nda.old_nda(inpath, testcols=testcols, split=split, small=small)
+    elif data[2693:2706]==b'BTS Client 8.':
+        outdata = nda_version_8_0.nda_version_8_0(inpath, testcols=testcols, split=split, small=small)
     else:
         outdata = new_nda.new_nda(inpath, testcols=testcols, split=split, small=small)
 
