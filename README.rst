@@ -13,4 +13,4 @@ csv_to_nda()
 
 Credits
 
-This is a collaborative work between Beyonder and IFE.
+This is a collaborative work between Beyonder, Corvus Energy, and IFE.
