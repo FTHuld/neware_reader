@@ -1,6 +1,6 @@
 Neware reader
 
-This Python Package was developed to help the researchers at Beyonder (http://beyonder.no/home) and IFE (http://ife.no/en/), Norway, to extract data from Neware battery analyzers.
+This Python Package was developed to help researchers to extract data from Neware battery analyzers.
 
 Free software: BSD-2 license
 
@@ -13,4 +13,4 @@ csv_to_nda()
 
 Credits
 
-This is a collaborative work between Beyonder, Corvus Energy, and IFE.
+This is a collaborative work between Beyonder (http://beyonder.no/home), Corvus Energy (https://corvusenergy.com/), and IFE (http://ife.no/en/).
