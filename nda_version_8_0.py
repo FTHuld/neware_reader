@@ -64,10 +64,8 @@ def new_byte_stream(byte_stream, small=False):
     # Current is 1/10 too small for large currents if this is not included
 
     current_multiplier = 1
-    if int.from_bytes(byte_stream[77:78], byteorder='little', signed=True) == 0:
+    if int.from_bytes(byte_stream[77:78], byteorder='little', signed=True) == -1:
         current_multiplier = 0.1
-    else:
-        current_multiplier = 1
 
 
     # Not sure - jumpto?
@@ -83,19 +81,16 @@ def new_byte_stream(byte_stream, small=False):
     curr_dict['voltage_V'] = vol / 10000
 
     # Current mA
-    cur = int.from_bytes(byte_stream[25:27], byteorder='little', signed=True)  # 7  current
+    cur = current_multiplier *int.from_bytes(byte_stream[25:27], byteorder='little', signed=True)  # 7  current
     # 26:29 for BTS8.0 with no current change
-    if (cur < 0) and (int.from_bytes(byte_stream[77:78], byteorder='little', signed=True) == -1):
-        cur = cur * 0.1
-
     curr_dict['current_mA'] = cur / 10000
 
     # Capacity Charge mAh
-    chg_cap = current_multiplier * int.from_bytes(byte_stream[37:45], byteorder='little', signed=True)  # ?
+    chg_cap = current_multiplier *int.from_bytes(byte_stream[37:45], byteorder='little', signed=True)# ?
     curr_dict['chg_capacity_mAh'] = chg_cap / 36000000
 
     # Capacity Discharge mAh
-    dchg_cap = current_multiplier * int.from_bytes(byte_stream[45:53], byteorder='little', signed=True)  # ?
+    dchg_cap = current_multiplier *  int.from_bytes(byte_stream[45:53], byteorder='little', signed=True)  # ?
     curr_dict['dchg_capacity_mAh'] = dchg_cap / 36000000
 
     curr_dict['capacity_mAh'] = abs(chg_cap + dchg_cap) / 36000000
