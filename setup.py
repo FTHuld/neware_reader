@@ -1,6 +1,6 @@
 import setuptools
 
-with open("README.md", "r", encoding="utf-8") as fh:
+with open("README.rst", "r", encoding="utf-8") as fh:
     long_description = fh.read()
 
 setuptools.setup(
@@ -10,7 +10,7 @@ setuptools.setup(
     # author_email=''
     description='Utilities for reading and writing neware nda files',
     long_description=long_description,
-    long_description_content_type="text/markdown",
+    long_description_content_type="text/text/x-rst",
     url='https://github.com/FTHuld/neware_reader',
     project_urls = {
         "Bug Tracker": "https://github.com/FTHuld/neware_reader/issues"
