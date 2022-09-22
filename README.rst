@@ -15,11 +15,11 @@ Free software: BSD-2 license
 
 Install using pip directly from github:
 
-``pip install git+https://github.com/jdbocarsly/neware_reader.git``
+``pip install git+https://github.com/FTHuld/neware_reader.git``
   
 or (if git is not installed):
 
-``pip install --upgrade https://github.com/jdbocarsly/neware_reader/tarball/master``
+``pip install --upgrade https://github.com/FTHuld/neware_reader/tarball/master``
 
 **Credits**
 
