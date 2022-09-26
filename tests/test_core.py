@@ -5,9 +5,9 @@ import shutil
 
 import pytest
 
-from . import new_nda
-from . import old_nda
-from . import neware
+from neware_reader import new_nda
+from neware_reader import old_nda
+from neware_reader import neware
 
 
 DATA_DIR = os.path.join(
