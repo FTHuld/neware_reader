@@ -81,9 +81,9 @@ def new_byte_stream(byte_stream, small=False):
     curr_dict['voltage_V'] = vol / 10000
 
     # Current mA
-    cur = current_multiplier *int.from_bytes(byte_stream[25:27], byteorder='little', signed=True)  # 7  current
+    cur = current_multiplier *int.from_bytes(byte_stream[25:29], byteorder='little', signed=True)  # 7  current
     # 26:29 for BTS8.0 with no current change
-    curr_dict['current_mA'] = cur / 10000
+    curr_dict['current_A'] = cur / 100000
 
     # Capacity Charge mAh
     chg_cap = current_multiplier *int.from_bytes(byte_stream[37:45], byteorder='little', signed=True)# ?
