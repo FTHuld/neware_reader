@@ -11,6 +11,8 @@ Free software: BSD-2 license
   filename = "path/to/cycling/data.nda"
   df = read_nda(filename) # returns pandas dataframe
 
+Using the option ``beta=True`` in ``read_nda()`` or ``csv_to_nda()`` will use a function to calculate how to transform the current to mA correctly. If you use this option and it works, please let us know. If it doesn't work, please also let us know.
+
 **Installation**
 
 Install using pip directly from github:
