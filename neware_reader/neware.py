@@ -14,15 +14,17 @@ def read_nda(inpath, testcols=False, split=False, small=False, beta=False):
     with open(inpath, 'rb') as f:
         data = f.read()
 
-    if data[112:115] == b'BTS':
+    find_v8_loc = data.find(b'BTS Client 8.') # This will need refining if there are big changes between 8.0 and 8.1
+
+    if find_v8_loc==-1: # i.e. if 'BTS Client 8.' isn't in the file
         outdata = old_nda.old_nda(inpath, testcols=testcols, split=split, small=small)
-    elif data[2693:2706]==b'BTS Client 8.':
+    elif data[find_v8_loc:find_v8_loc+13]==b'BTS Client 8.':
         if beta==True:
             outdata = nda_version_8_0_beta.nda_version_8_0(inpath, testcols=testcols, split=split, small=small)
         else:
             outdata = nda_version_8_0.nda_version_8_0(inpath, testcols=testcols, split=split, small=small)
     else:
-        outdata = new_nda.new_nda(inpath, testcols=testcols, split=split, small=small)
+        outdata = new_nda.new_nda(inpath, testcols=testcols, split=split, small=small) # Is this deprecated?
 
     return outdata
 

@@ -31,6 +31,8 @@ def get_step_name(s):
         return 'CP_Chg'
     elif s==10:#WHAT IS 11-19??
         return 'CR_Dchg'
+    elif s==19:
+        return 'CV_Dchg'
     elif s == 20:
         return "CCCV_Dchg"
     else:
@@ -90,7 +92,7 @@ def multiplier(rng_cur):
     return factor
 
 
-# Return a dict containing the relevant data.  all nice and pretty like.
+# Return a dict containing the relevant data. all nice and pretty like.
 def new_byte_stream(byte_stream, small=False):
     curr_dict = {}
 
@@ -141,7 +143,7 @@ def new_byte_stream(byte_stream, small=False):
     curr_dict['voltage_V'] = vol / 10000
 
     # Current mA
-    cur = int.from_bytes(byte_stream[25:27], byteorder='little', signed=True)  # 7  current
+    cur = int.from_bytes(byte_stream[25:28], byteorder='little', signed=True)  # 7  current
     # 26:29 for BTS8.0 with no current change
     curr_dict['current_mA'] = cur/curr_multiplier
 
@@ -184,7 +186,7 @@ def new_byte_stream(byte_stream, small=False):
     curr_dict['timestamp'] = f'{year}-{month}-{day} {hour}:{minute}:{second}'
 
     # 78-86 Not sure. Extra space?
-    column_5 = int.from_bytes(byte_stream[77:78], byteorder='little', signed=True)  # 11
+    column_5 = int.from_bytes(byte_stream[77:80], byteorder='little', signed=True)  # 11
     curr_dict['column_5'] = column_5
 
     # print(curr_dict)
