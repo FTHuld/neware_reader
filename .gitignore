@@ -55,3 +55,6 @@ docs/_build/
 # editor autosave
 *~
 
+# local
+local/
+
